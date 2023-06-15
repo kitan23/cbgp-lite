@@ -100,7 +100,7 @@
 
                                                           (merge
                                                            {:grouped (group-by :errors individuals)}
-                                                           (plx/make-plexicase-selection (:population-size config) (:num-errors opts) info-map)))
+                                                           (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))))
                                        :breed           (make-breed opts)
                                        :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
