@@ -9,7 +9,9 @@
             [erp12.ga-clj.search.ga :as ga]
             [erp12.ga-clj.toolbox :as tb]
             [taoensso.timbre :as log]
-            [taoensso.timbre.appenders.core :as log-app]))
+            [taoensso.timbre.appenders.core :as log-app]
+            [erp12.ga-clj.plexicase :as plx]
+            ))
 
 (log/merge-config!
   {:output-fn (partial log/default-output-fn {:stacktrace-fonts {}})
@@ -35,14 +37,15 @@
 
 (defn make-breed
   [opts]
-  (let [select (tb/make-lexicase-selection opts)
+  (let [select plx/plexicase-select-parent-using-index
         mutate (tb/make-size-neutral-umad (assoc opts :rate (:umad-rate opts)))]
     (fn breed [state]
       (-> state
           ;; Take 1 individual per error vector.
-          (->> :grouped vals (map rand-nth))
+          ;; (->> :grouped vals (map rand-nth))
           ;; Select a parent and mutate to child
-          (select state)
+          select
+          ;; (select state)
           :genome
           mutate))))
 
@@ -66,7 +69,9 @@
         evaluator (i/make-evaluator (-> opts
                                         (assoc :cases (:train task))
                                         (dissoc :train :test)))
-        {:keys [best result]} (ga/run {:population-size (:population-size config)
+        start-time (. System (nanoTime))
+
+        {:keys [best result step]} (ga/run {:population-size (:population-size config)
                                        :genome-factory  #(pl/random-plushy-genome opts)
                                        :pre-eval        (let [{:keys [downsample-rate train]} opts]
                                                           (fn [{:keys [step]}]
@@ -76,7 +81,7 @@
                                                                            train)
                                                              :step-start (System/currentTimeMillis)}))
                                        :evaluator       evaluator
-                                       :post-eval       (fn [{:keys [individuals]}]
+                                       :post-eval       (fn [{:keys [individuals] :as info-map}]
                                                           (doseq [[stat-name stat-val]
                                                                   (sort-by key
                                                                            (bu/aggregate-stats {:code-depth            bu/code-depth-stat
@@ -92,7 +97,10 @@
                                                                                                 :unique-behaviors      bu/unique-behaviors-stat}
                                                                                                individuals))]
                                                             (log/info stat-name stat-val))
-                                                          {:grouped (group-by :errors individuals)})
+
+                                                          (merge
+                                                           {:grouped (group-by :errors individuals)}
+                                                           (plx/make-plexicase-selection (:population-size config) (:num-errors opts) info-map)))
                                        :breed           (make-breed opts)
                                        :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
@@ -116,6 +124,7 @@
                                                                 (log/info "Best individual solved a batch but not all training cases.")))))
                                        :mapper          pmap
                                        })
+        end-time (. System (nanoTime))
         _ (log/info "PRE-SIMPLIFICATION" best)
         ;; Simplify the best individual seen during evolution.
         best (i/simplify {:individual           best
@@ -127,6 +136,9 @@
                                                        :cases    (:test task)
                                                        :loss-fns (:loss-fns task)
                                                        :penalty  (:penalty default-config)})]
+
+    (log/info "RUN TIME" (str (/ (- end-time start-time) 1e9) "s"))
+    (log/info "STEPS" step)
     (log/info "BEST CODE" (let [code (:code best)]
                             (if (coll? code)
                               (reverse (into '() code))
