@@ -98,9 +98,16 @@
                                                                                                individuals))]
                                                             (log/info stat-name stat-val))
 
-                                                          (merge
-                                                           {:grouped (group-by :errors individuals)}
-                                                           (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))))
+                                                          (let [start (. System (nanoTime))
+                                                                plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
+                                                                end (. System (nanoTime))
+                                                                _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
+                                                            (merge
+                                                             {:grouped (group-by :errors individuals)}
+                                                             plex-parents))) 
+                                                          ;; (merge
+                                                          ;;    {:grouped (group-by :errors individuals)}
+                                                          ;;    (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts))))) 
                                        :breed           (make-breed opts)
                                        :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
