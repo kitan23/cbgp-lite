@@ -99,7 +99,7 @@
                                                             (log/info stat-name stat-val))
 
                                                           (let [start (. System (nanoTime))
-                                                                plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
+                                                                plex-parents (plx/make-plexicase-selection (:population-size config)  (assoc info-map :num-errors (:num-errors opts) :option 2))
                                                                 end (. System (nanoTime))
                                                                 _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
                                                             (merge
