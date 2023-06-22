@@ -101,15 +101,22 @@
                                                             (log/info stat-name stat-val))
 
                                                           #_(let
-                                                           [start (. System (nanoTime))
-                                                            plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
+                                                             [start (. System (nanoTime))
+                                                              plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
+                                                              end (. System (nanoTime))
+                                                              _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
+                                                              plex-parents)
+                                                          
+                                                          (let
+                                                           [
+                                                            _ (pr-str individuals)
+                                                            start (. System (nanoTime))
+                                                            grouped_indi {:grouped (group-by :errors individuals)}
+                                                            _ (pr-str grouped_indi)
                                                             end (. System (nanoTime))
-                                                            _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
-                                                            (merge
-                                                             {:grouped (group-by :errors individuals)}
-                                                             plex-parents))
-                                                          {:grouped (group-by :errors individuals)}
-                                                          ) 
+                                                            _ (log/info (str "Grouping took " (/ (- end start) 1e6) " ms"))]
+                                                            grouped_indi))
+                                                           
                                        :breed           (make-breed opts)
                                        :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
