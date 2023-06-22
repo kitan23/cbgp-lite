@@ -39,15 +39,17 @@
   [opts]
   (let [select plx/plexicase-select-parent-using-index
         mutate (tb/make-size-neutral-umad (assoc opts :rate (:umad-rate opts)))]
-    (fn breed [state]
-      (-> state
+    (fn breed [state] (let
+                       [selected (select state)]
+                        (pr-str selected)
+                        (mutate (:genome selected)))
+      #_(-> state
           ;; Take 1 individual per error vector.
-          ;; (->> :grouped vals (map rand-nth))
           ;; Select a parent and mutate to child
-          select
+            select
           ;; (select state)
-          :genome
-          mutate))))
+            :genome
+            mutate))))
 
 (defn run
   [{:keys [type-counts-file] :as opts}]
@@ -98,16 +100,13 @@
                                                                                                individuals))]
                                                             (log/info stat-name stat-val))
 
-                                                          (let [start (. System (nanoTime))
+                                                          (let [_ (pr-str info-map)
+                                                                start (. System (nanoTime))
                                                                 plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
+                                                                _ (pr-str plex-parents)
                                                                 end (. System (nanoTime))
                                                                 _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
-                                                            (merge
-                                                             {:grouped (group-by :errors individuals)}
-                                                             plex-parents))) 
-                                                          ;; (merge
-                                                          ;;    {:grouped (group-by :errors individuals)}
-                                                          ;;    (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts))))) 
+                                                            plex-parents))
                                        :breed           (make-breed opts)
                                        :individual-cmp  (comparator #(< (:total-error %1) (:total-error %2)))
                                        :stop-fn         (let [{:keys [max-generations cases]} opts]
