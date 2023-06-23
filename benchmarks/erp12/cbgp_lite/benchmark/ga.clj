@@ -37,19 +37,23 @@
 
 (defn make-breed
   [opts]
-  (let [
-        select (tb/make-lexicase-selection opts)
+  (let [select (tb/make-lexicase-selection opts)
         ;; select plx/plexicase-select-parent-using-index
         mutate (tb/make-size-neutral-umad (assoc opts :rate (:umad-rate opts)))]
     (fn breed [state]
-      (-> state
+      (let [grouped (->> state :grouped vals (map rand-nth))
+            selected (select grouped state)]
+        (pr-str selected)
+        (mutate (:genome selected)))
+
+      #_(-> state
           ;; Take 1 individual per error vector.
-          (->> :grouped vals (map rand-nth))
+            (->> :grouped vals (map rand-nth))
           ;; Select a parent and mutate to child
           ;; select
-          (select state)
-          :genome
-          mutate))))
+            (select state)
+            :genome
+            mutate))))
 
 (defn run
   [{:keys [type-counts-file] :as opts}]
