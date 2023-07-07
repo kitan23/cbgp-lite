@@ -2,13 +2,13 @@
 #PBS -l nodes=1:ppn=8
 #PBS -l mem=20GB
 #PBS -q una-new
-#PBS -M thelmuth@hamilton.edu
+#PBS -M ktran@hamilton.edu
 #PBS -m n
 #PBS -j oe
 #PBS -l walltime=72:00:00
 #PBS -r y
-#PBS -o /usr/local/research/compsci/helmuth/thelmuth/Results/HPC-files/
-#PBS -t 0-99
+#PBS -o #dir#/#namespace#/HPC-logs/
+#PBS -t #run-nums#
 # This last line is the range of the number of jobs to start, inclusive
 
 # NOTE: Directions for use are at the bottom of this file.
@@ -25,9 +25,9 @@ PROBLEM="#namespace#"
 # Results will go to our shared results directory (helmuth). You may have a symlink to this directory called Collab.
 # Make sure the correct subdirectory follows helmuth -- the first subdirectory should be
 # your username (in my case, thelmuth).
-DIRECTORY="/usr/local/research/compsci/helmuth/thelmuth/Results/cbgp/initial-benchmarking/"
+DIRECTORY="#dir#"
 
-PYTHONCMD="python3 scripts/single_run_runner.py --clj /home/thelmuth/bin/clojure/bin/clojure --search ga --problem $PROBLEM --data-dir /home/thelmuth/PSB-DATA --run-number $PBS_ARRAYID --out $DIRECTORY --log-types "
+PYTHONCMD="python3 scripts/single_run_runner.py --clj clojure --search ga --problem $PROBLEM --run-number $PBS_ARRAYID --out $DIRECTORY #cmd-line-params# --log-types "
 
 
 echo "Running on node(s):"
@@ -37,7 +37,7 @@ echo "Changing to directory $PBS_O_WORKDIR"
 cd $PBS_O_WORKDIR
 
 echo "Making directory and copying CBGP into it: $DIRECTORY"
-mkdir -p "$DIRECTORY/$PROBLEM"
+mkdir -p "$DIRECTORY/$PROBLEM/HPC-logs/"
 
 if [ $PBS_ARRAYID = "0" ]
 then
