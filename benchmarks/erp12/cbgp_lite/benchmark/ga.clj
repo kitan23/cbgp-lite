@@ -41,9 +41,10 @@
         ;; select plx/plexicase-select-parent-using-index
         mutate (tb/make-size-neutral-umad (assoc opts :rate (:umad-rate opts)))]
     (fn breed [state]
-      (let [grouped (->> state :grouped vals (map rand-nth))
-            selected (select grouped state)]
-        (pr-str selected)
+      (let [
+            ;; grouped (->> state :grouped vals (map rand-nth))
+            non-grouped (:individuals state)
+            selected (select non-grouped state)] 
         (mutate (:genome selected)))
 
       #_(-> state
@@ -105,13 +106,6 @@
                                                             (log/info stat-name stat-val))
 
                                                           #_(let
-                                                             [start (. System (nanoTime))
-                                                              plex-parents (plx/make-plexicase-selection (:population-size config) (assoc info-map :num-errors (:num-errors opts)))
-                                                              end (. System (nanoTime))
-                                                              _ (log/info (str "Plexicase selection took " (/ (- end start) 1e6) " ms"))]
-                                                              plex-parents)
-                                                          
-                                                          (let
                                                            [
                                                             _ (pr-str individuals)
                                                             start (. System (nanoTime))
